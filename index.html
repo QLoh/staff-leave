@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>勞動假別查詢</title>
+  <style>
+    body {
+      font-family: Arial, "微軟正黑體", sans-serif;
+      background-color: #f5f5f5;
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: #fff;
+      padding: 20px 30px;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      margin-top: 12px;
+    }
+    input, select {
+      width: 100%;
+      padding: 10px;
+      margin-top: 6px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+    button {
+      margin-top: 15px;
+      padding: 10px 20px;
+      background: #333;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #555;
+    }
+    .output {
+      margin-top: 20px;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      background: #fafafa;
+    }
+    .note {
+      margin-top: 20px;
+      font-size: 14px;
+      color: #555;
+    }
+    .note strong {
+      color: #b22222;
+    }
+    footer {
+      text-align: center;
+      margin-top: 25px;
+      font-size: 13px;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>勞動假別查詢</h1>
+
+    <label>選擇假別：
+      <select id="leaveType">
+        <option value="annual">特休假</option>
+        <option value="sick">病假</option>
+        <option value="personal">事假</option>
+        <option value="marriage">婚假</option>
+        <option value="bereavement">喪假</option>
+      </select>
+    </label>
+
+    <label>年資（年）：<input type="number" id="years" min="0"></label>
+    <label>每月工時（小時）：<input type="number" id="hours" min="0"></label>
+    <label>月薪（元）：<input type="number" id="salary" min="0"></label>
+
+    <button onclick="calcLeave()">查詢</button>
+
+    <div id="result" class="output"></div>
+
+    <div class="note">
+      <p><strong>⚠️ 提醒：</strong>本工具僅供參考，實際計算請依《勞基法》及勞動部公告。</p>
+    </div>
+  </div>
+
+  <footer>
+    水山子研究室 | Email: sarraaagoole@gmail.com
+  </footer>
+
+  <script>
+    function calcLeave() {
+      const type = document.getElementById("leaveType").value;
+      const years = parseFloat(document.getElementById("years").value);
+      const hours = parseFloat(document.getElementById("hours").value);
+      const salary = parseFloat(document.getElementById("salary").value);
+
+      let result = "";
+
+      if (type === "annual") {
+        let leaveDays = 0;
+        if (years >= 0.5 && years < 1) leaveDays = 3;
+        else if (years >= 1 && years < 2) leaveDays = 7;
+        else if (years >= 2 && years < 3) leaveDays = 10;
+        else if (years >= 3 && years < 5) leaveDays = 14;
+        else if (years >= 5 && years < 10) leaveDays = 15;
+        else if (years >= 10) leaveDays = 30;
+
+        const ratio = hours / 174; // 174h 視為全時
+        const adjusted = Math.round(leaveDays * ratio * 10) / 10;
+        const dailySalary = Math.round(salary / 30);
+
+        result = `
+          <p>假別：特休假</p>
+          <p>年資：${years} 年</p>
+          <p>法定天數：${leaveDays} 天</p>
+          <p>部分工時計算：${adjusted} 天</p>
+          <p>日薪：約 ${dailySalary} 元</p>
+          <p><strong>不得因休假影響全勤獎金</strong></p>
+        `;
+      }
+
+      if (type === "sick") {
+        result = `
+          <p>假別：病假</p>
+          <p>一年內不超過30日（不扣工資）。</p>
+          <p>超過30日 → 不超過一年合計2年內1年不得超過一年半。</p>
+          <p>是否給薪：部分有薪（依規定）。</p>
+        `;
+      }
+
+      if (type === "personal") {
+        result = `
+          <p>假別：事假</p>
+          <p>一年內合計不得超過14日。</p>
+          <p>是否給薪：❌ 無薪。</p>
+        `;
+      }
+
+      if (type === "marriage") {
+        result = `
+          <p>假別：婚假</p>
+          <p>天數：8日。</p>
+          <p>是否給薪：✅ 有薪。</p>
+        `;
+      }
+
+      if (type === "bereavement") {
+        result = `
+          <p>假別：喪假</p>
+          <p>父母、養父母、配偶：8日</p>
+          <p>祖父母、兄弟姊妹、子女：6日</p>
+          <p>曾祖父母、外祖父母：3日</p>
+          <p>是否給薪：✅ 有薪。</p>
+        `;
+      }
+
+      document.getElementById("result").innerHTML = result;
+    }
+  </script>
+</body>
+</html>
