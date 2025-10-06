@@ -207,8 +207,49 @@
       if (data.proof) html += `<p><b>所需憑證：</b>${data.proof}</p>`;
       if (data.note) html += `<p><b>補充：</b>${data.note}</p>`;
 
+      // 部分工時說明（展開/收合）
+      if (["特別休假","產假","病假","事假"].includes(type) || (type === "病假" && subtype === "生理假")) {
+        let partialInfo = "";
+        if (type === "特別休假") {
+          partialInfo = `<p>以全職年度工時 2088 小時（半年 1044 小時）為基準，依比例計算。公式： (實際工時 ÷ 2088) × 法定特休天數。</p>`;
+        } else if (type === "產假") {
+          partialInfo = `<p>假期以曆日計算（例：8週），計薪依週工時換算。</p>
+          <ul>
+            <li>固定工時制 → 週工時 ÷ 5（或6）天 × 假期日數</li>
+            <li>不固定工時制 → 前 6 個月平均工時計算</li>
+          </ul>`;
+        } else if (type === "病假" && subtype === "生理假") {
+          partialInfo = `<p>以曆日計算，薪資依當日班表工時計算半薪。</p>`;
+        } else if (type === "病假") {
+          partialInfo = `<p>依週工時比例換算請假時數，再套用半薪或無薪規則。</p>`;
+        } else if (type === "事假") {
+          partialInfo = `<p>依週工時比例換算請假時數，無薪。</p>`;
+        }
+
+        html += `
+          <div style="margin-top:15px;padding:10px;border-top:1px solid #ccc;">
+            <button id="toggleBtn" onclick="togglePartialInfo()" style="padding:5px 10px;cursor:pointer;">
+              📂 展開部分工時計算說明
+            </button>
+            <div id="partialInfo" style="display:none; margin-top:10px;">${partialInfo}</div>
+          </div>
+        `;
+      }
+
       resultDiv.innerHTML = html;
       resultDiv.style.display = "block";
+    }
+
+    function togglePartialInfo() {
+      const div = document.getElementById("partialInfo");
+      const btn = document.getElementById("toggleBtn");
+      if (div.style.display === "none") {
+        div.style.display = "block";
+        btn.textContent = "📂 收合部分工時計算說明";
+      } else {
+        div.style.display = "none";
+        btn.textContent = "📂 展開部分工時計算說明";
+      }
     }
   </script>
 </body>
