@@ -26,7 +26,19 @@
       background: #fff;
       border-radius: 8px;
       box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-      white-space: pre-line;
+    }
+    details {
+      margin-top: 15px;
+    }
+    summary {
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .subbox {
+      margin-top: 10px;
+      padding: 10px;
+      background: #f4f8ff;
+      border-left: 4px solid #5a8dee;
     }
   </style>
 </head>
@@ -61,128 +73,47 @@
     const leaveData = {
       "病假": {
         "subtypes": {
-          "普通傷病假（未住院）": { 
-            days: "一年內最多 30 日",
-            pay: "前 30 日半薪；超過部分無薪",
-            fullAttendance: "可扣",
-            proof: "醫師診斷或就醫證明",
-            parttime: {
-              formula: "以週工時 ÷ 5 換算日工時，再依半薪計算。",
-              example: "週工時 20 小時 → 日工時 4 小時。\n請 1 日病假 → 4 小時 × 時薪 × 0.5。"
-            }
-          },
-          "普通傷病假（住院）": { 
-            days: "二年內與安胎假合計不得超過 1 年",
-            pay: "前 30 日半薪；超過無薪",
-            proof: "住院證明",
-            parttime: {
-              formula: "同一般病假，日工時 = 週工時 ÷ 5。",
-              example: "週工時 24 小時 → 日工時 4.8 小時。\n住院 10 日 → 4.8 × 10 × 時薪 × 0.5。"
-            }
-          },
-          "生理假": { 
-            days: "每月 1 日，全年最多 3 日（獨立額度）；第 4 次起併入病假",
-            pay: "半薪",
-            fullAttendance: "不扣",
-            proof: "免證明",
-            parttime: {
-              formula: "依當日班表工時計算半薪。",
-              example: "當日班表 6 小時 → 6 × 時薪 × 0.5。"
-            }
-          },
-          "安胎假": { 
-            days: "與住院病假合併，二年內合計 1 年",
-            pay: "前 30 日半薪；超過無薪",
-            proof: "醫師證明",
-            parttime: {
-              formula: "同住院病假處理。",
-              example: "週工時 15 小時 → 日工時 3 小時。\n安胎假 5 日 → 3 × 5 × 時薪 × 0.5。"
-            }
-          },
-          "公傷病假（職災）": { 
-            days: "醫療期間",
-            pay: "工資照給（得與勞保抵充）",
-            proof: "職災相關文件",
-            parttime: {
-              formula: "依實際班表給薪，不論部分或全時。",
-              example: "週工時 25 小時，請 2 日職災病假 → 按班表時數全薪。"
-            }
-          }
+          "普通傷病假（未住院）": { days: "30", unit: "日", pay: "前 30 日半薪；超過部分無薪", fullAttendance: "可扣", proof: "醫師診斷或就醫證明" },
+          "普通傷病假（住院）": { days: "365", unit: "日(二年內合計)", pay: "前 30 日半薪；超過 30 日無薪", fullAttendance: "可扣", proof: "住院證明" },
+          "生理假": { days: "3", unit: "日/年", pay: "半薪", fullAttendance: "不扣", proof: "免證明" },
+          "安胎假": { days: "365", unit: "日(二年內合計)", pay: "依病假規則", fullAttendance: "不扣", proof: "醫師證明" },
+          "公傷病假（職災）": { days: "醫療期間", pay: "工資照給", fullAttendance: "不扣", proof: "職災相關文件" }
         }
       },
       "事假": {
         "subtypes": {
-          "事假": { 
-            days:"14日/年", hours:"112小時", pay:"無薪", proof:"事由說明",
-            parttime: {
-              formula: "日工時 = 週工時 ÷ 5，以時數計算。",
-              example: "週工時 20 小時 → 日工時 4 小時。\n請 1 日事假 → 扣 4 小時薪資。"
-            }
-          },
-          "家庭照顧假": { 
-            days:"7日/年（併入事假）", pay:"無薪", proof:"家庭照顧原因",
-            parttime: {
-              formula: "同事假，以日工時計算。",
-              example: "週工時 30 小時 → 日工時 6 小時。\n請 1 日家庭照顧假 → 扣 6 小時薪資。"
-            }
-          }
+          "事假": { days:"14", unit:"日/年", hours:"112小時", pay:"無薪", proof:"事由說明" },
+          "家庭照顧假": { days:"7", unit:"日/年", pay:"無薪", proof:"需家庭照顧原因" }
         }
       },
       "特別休假": {
         "subtypes": {
-          "1年": { 
-            days:"7日", pay:"有薪", proof:"免證明",
-            parttime: {
-              formula: "特休日數 × (實際週工時 ÷ 40)。",
-              example: "週工時 20 小時 → 7 × (20 ÷ 40) = 3.5 日 → 3 日或依公司補半天。"
-            }
-          }
+          "0.5年": { days:"3", unit:"日", pay:"有薪", proof:"免證明" },
+          "1年": { days:"7", unit:"日", pay:"有薪", proof:"免證明" },
+          "2年": { days:"10", unit:"日", pay:"有薪", proof:"免證明" },
+          "3年": { days:"14", unit:"日", pay:"有薪", proof:"免證明" },
+          "5年": { days:"15", unit:"日", pay:"有薪", proof:"免證明" },
+          "10年以上": { days:"30", unit:"日", pay:"有薪", proof:"免證明" }
         }
       },
       "喪假": {
         "subtypes": {
-          "父母（含養繼）、配偶、子女": { 
-            days:"8日", pay:"有薪", proof:"死亡證明/訃聞",
-            parttime: {
-              formula: "依比例換算：喪假日數 × (週工時 ÷ 40)。",
-              example: "週工時 20 小時 → 8 × 0.5 = 4 日。"
-            }
-          }
+          "父母（含養繼）、配偶、子女": { days:"8", unit:"日", pay:"有薪", proof:"死亡證明/訃聞" },
+          "祖父母、兄弟姊妹": { days:"6", unit:"日", pay:"有薪", proof:"死亡證明/訃聞" },
+          "曾祖父母、配偶父母": { days:"3", unit:"日", pay:"有薪", proof:"死亡證明/訃聞" }
         }
       },
       "產假": {
         "subtypes": {
-          "順產": { 
-            days:"8週", pay:"滿6個月工資照給；未滿6個月半薪", proof:"出生證明",
-            parttime: {
-              formula: "週工時 × 8 週 = 總時數。",
-              example: "週工時 20 小時 → 20 × 8 = 160 小時。\n產假薪資依全薪或半薪發給。"
-            }
-          }
+          "順產": { days:"56", unit:"日(8週)", pay:"受僱滿6個月工資照給；未滿6個月半薪", proof:"出生證明或醫師診斷書" },
+          "流產（未滿2個月）": { days:"5", unit:"日", pay:"無薪", proof:"醫師診斷書" },
+          "流產（滿2個月至未滿3個月）": { days:"7", unit:"日", pay:"無薪", proof:"醫師診斷書" },
+          "流產（滿3個月以上）": { days:"28", unit:"日", pay:"受僱滿6個月工資照給；未滿6個月半薪", proof:"醫師診斷書" }
         }
       },
-      "陪產檢及陪產假": {
-        days:"7日", pay:"有薪", proof:"出生證明或媽媽手冊",
-        note:"陪產假需於配偶分娩當日及前後15日內請休",
-        parttime: {
-          formula: "依比例換算：陪產假日數 × (週工時 ÷ 40)。",
-          example: "週工時 24 小時 → 7 × (24 ÷ 40) = 4.2 日 → 可休 4 日或補時數。"
-        }
-      },
-      "婚假": {
-        days:"8日", pay:"有薪", proof:"結婚登記證明",
-        parttime: {
-          formula: "依比例換算：婚假日數 × (週工時 ÷ 40)。",
-          example: "週工時 30 小時 → 8 × 0.75 = 6 日。"
-        }
-      },
-      "原住民族歲時祭儀假": {
-        days:"3日", pay:"有薪", proof:"戶口名簿（註明族別與關係）",
-        parttime: {
-          formula: "依比例換算：祭儀假日數 × (週工時 ÷ 40)。",
-          example: "週工時 20 小時 → 3 × 0.5 = 1.5 日 → 可休 1–2 日。"
-        }
-      }
+      "陪產檢及陪產假": { days: "7", unit:"日", pay: "有薪", proof: "出生證明或媽媽手冊", note: "陪產假需於配偶分娩日前後15日內請休" },
+      "婚假": { days: "8", unit:"日", pay: "有薪", fullAttendance: "不扣", proof: "結婚登記證明" },
+      "原住民族歲時祭儀假": { days:"3", unit:"日", pay:"有薪", fullAttendance:"不扣", proof:"戶口名簿（註明族別與親屬關係）" }
     };
 
     const leaveTypeSelect = document.getElementById("leaveType");
@@ -224,16 +155,26 @@
       if (!data) return;
 
       let html = `<h3>${type}${subtype ? " - " + subtype : ""}</h3>`;
-      if (data.days) html += `<p><b>給假天數：</b>${data.days}</p>`;
+      if (data.days) html += `<p><b>給假天數：</b>${data.days}${data.unit || ""}</p>`;
       if (data.hours) html += `<p><b>請假單位：</b>${data.hours}</p>`;
       if (data.pay) html += `<p><b>給薪狀況：</b>${data.pay}</p>`;
       if (data.fullAttendance) html += `<p><b>全勤影響：</b>${data.fullAttendance}</p>`;
       if (data.proof) html += `<p><b>所需憑證：</b>${data.proof}</p>`;
       if (data.note) html += `<p><b>補充：</b>${data.note}</p>`;
-      if (data.parttime) {
-        html += `<hr><h4>部分工時換算說明</h4>`;
-        html += `<p><b>公式：</b>${data.parttime.formula}</p>`;
-        html += `<p><b>範例：</b>${data.parttime.example}</p>`;
+
+      // 部分工時換算說明
+      if (!isNaN(parseFloat(data.days))) {
+        const baseDays = parseFloat(data.days);
+        const calc = baseDays * (20 / 40);
+        html += `
+          <details>
+            <summary>部分工時換算說明</summary>
+            <div class="subbox">
+              <p><b>公式：</b>假別天數 × (週工時 ÷ 40)</p>
+              <p><b>案例：</b>李小姐週工時 20 小時 → ${baseDays} × (20 ÷ 40) = ${calc.toFixed(1)} 日</p>
+            </div>
+          </details>
+        `;
       }
 
       resultDiv.innerHTML = html;
