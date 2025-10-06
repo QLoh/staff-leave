@@ -64,16 +64,7 @@
 </head>
 <body>
   <h2>法定假別查詢系統</h2>
-    <!-- 公布欄 -->
-  <div class="bulletin">
-    <h3>📢 公布欄</h3>
-    <ul>
-      <li>2025/10/06：新增「部分工時換算說明」功能。</li>
-      <li>2025/09/30：補充「產假」流產假別細節。</li>
-    </ul>
-  </div>
-
-
+   
   <!-- 主選單 -->
   <label for="leaveType">選擇假別：</label>
   <select id="leaveType">
@@ -97,6 +88,15 @@
   <button onclick="showResult()">查詢</button>
 
   <div id="result" class="result" style="display:none;"></div>
+
+   <!-- 公布欄 -->
+  <div class="bulletin">
+    <h3>📢 公布欄</h3>
+    <ul>
+      <li>2025/10/06：法定假期查詢功能上架，希望能幫助勞工更便利查詢假期。</li>
+      <li>2025/10/06：日薪計算公式:月薪總額 ÷ 30日。這是最普遍且被接受的計算方式。 </li>
+    </ul>
+  </div>
 
   <script>
     const leaveData = {
