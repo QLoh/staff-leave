@@ -12,29 +12,22 @@
       max-width: 600px;
       margin: 0 auto;
     }
-    h2 {
-      text-align: center;
-      margin-bottom: 20px;
-    }
+    h2 { text-align: center; }
     select, button {
-      font-size: 18px;   /* 下拉字變大 */
+      font-size: 18px;
       padding: 8px;
       margin: 10px 0;
       width: 100%;
     }
-    .result-box {
-      margin-top: 20px;
-      padding: 15px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      background: #fff;
-      display: none; /* 預設隱藏 */
-    }
-    .warning {
-      color: #d9534f;
+    .box {
       margin-top: 15px;
-      font-size: 14px;
+      padding: 12px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      background: #fff;
     }
+    .hidden { display: none; }
+    .note { color: #b22222; font-size: 14px; margin-top: 8px; }
   </style>
 </head>
 <body>
@@ -43,100 +36,91 @@
 
   <!-- 假別選單 -->
   <label for="leaveType">選擇假別：</label>
-  <select id="leaveType">
+  <select id="leaveType" onchange="showInfo()">
     <option value="">請選擇</option>
     <option value="marriage">婚假</option>
-    <option value="funeral">喪假</option>
-    <option value="annual">特休</option>
+    <option value="annual">特休假</option>
     <option value="sick">病假</option>
+    <option value="bereavement">喪假</option>
   </select>
 
-  <!-- 次屬性選單 (依假別動態出現) -->
-  <div id="subOptionDiv" style="display:none;">
-    <label for="subOption">請選擇細項：</label>
-    <select id="subOption"></select>
+  <!-- 適用情境 & 憑證 -->
+  <div id="infoBox" class="box hidden">
+    <p id="usage"></p>
+    <p id="proof"></p>
+    <button onclick="showResult()">查詢</button>
   </div>
 
-  <button onclick="showInfo()">查詢</button>
-
-  <!-- 結果顯示 -->
-  <div class="result-box" id="resultBox"></div>
-
-  <div class="warning">
-    ⚠️ 提醒：本工具僅供參考，實際計算請依《勞基法》及勞動部公告。
+  <!-- 查詢結果 -->
+  <div id="resultBox" class="box hidden">
+    <p id="days"></p>
+    <p id="pay"></p>
+    <p id="note"></p>
   </div>
 
-<script>
-  // 假資料：等你提供一覽表後替換
-  const leaveData = {
-    marriage: {
-      info: "婚假：8日，全薪，不可扣全勤，部分工時按比例。使用情境：結婚登記。憑證：結婚證書。"
-    },
-    funeral: {
-      sub: {
-        parent: "父母/養父母/配偶：8日，全薪。",
-        grandparent: "祖父母：5日，全薪。",
-        sibling: "兄弟姊妹：3日，全薪。"
+  <!-- 部分工時計算公式 -->
+  <div id="parttimeBox" class="box hidden">
+    <h3>部分工時計算公式</h3>
+    <p>部分工時假別 = 法定天數 × (每月工時 ÷ 174)</p>
+    <p class="note">例：80 ÷ 174 ≈ 0.46 → 特休 3 天 × 0.46 = 約 1.4 天</p>
+  </div>
+
+  <script>
+    const leaveData = {
+      marriage: {
+        usage: "📌 使用情境：本人結婚。",
+        proof: "📝 憑證：結婚登記證明。",
+        result: { days: "8日", pay: "✅ 有薪", note: "❌ 不得因休婚假影響全勤" }
+      },
+      annual: {
+        usage: "📌 使用情境：勞工依年資享有特別休假。",
+        proof: "📝 憑證：通常不需，但需事先排定並經主管同意。",
+        result: { days: "依年資 3–30日", pay: "✅ 有薪", note: "❌ 不得因休假影響全勤" }
+      },
+      sick: {
+        usage: "📌 使用情境：因疾病或受傷需要療養。",
+        proof: "📝 憑證：醫師診斷證明或醫院證明文件。",
+        result: { days: "每年不超過30日（部分有薪）", pay: "⚠️ 視住院/非住院而定", note: "✅ 可能影響全勤" }
+      },
+      bereavement: {
+        usage: "📌 使用情境：直系或旁系親屬死亡。",
+        proof: "📝 憑證：死亡證明或相關文件。",
+        result: { days: "依親屬 3–8日", pay: "✅ 有薪", note: "❌ 不得因休假影響全勤" }
       }
-    },
-    annual: {
-      sub: {
-        "0.5": "滿半年未滿1年：3日，有薪。",
-        "1": "滿1年：7日，有薪。"
+    };
+
+    function showInfo() {
+      const type = document.getElementById("leaveType").value;
+      const infoBox = document.getElementById("infoBox");
+      const resultBox = document.getElementById("resultBox");
+      const parttimeBox = document.getElementById("parttimeBox");
+
+      // 清空下方
+      resultBox.classList.add("hidden");
+      parttimeBox.classList.add("hidden");
+
+      if (type) {
+        document.getElementById("usage").innerText = leaveData[type].usage;
+        document.getElementById("proof").innerText = leaveData[type].proof;
+        infoBox.classList.remove("hidden");
+      } else {
+        infoBox.classList.add("hidden");
       }
-    },
-    sick: {
-      info: "病假：1年內不超過30日，部分有薪。是否扣全勤：可扣。憑證：醫師診斷證明或住院證明。"
-    }
-  };
-
-  // 下拉切換處理
-  document.getElementById("leaveType").addEventListener("change", function() {
-    const type = this.value;
-    const subDiv = document.getElementById("subOptionDiv");
-    const subSelect = document.getElementById("subOption");
-    const resultBox = document.getElementById("resultBox");
-
-    // 清空結果
-    resultBox.style.display = "none";
-    resultBox.innerHTML = "";
-
-    // 判斷是否有次屬性
-    if (type && leaveData[type] && leaveData[type].sub) {
-      subDiv.style.display = "block";
-      subSelect.innerHTML = "<option value=''>請選擇</option>";
-      for (let key in leaveData[type].sub) {
-        subSelect.innerHTML += `<option value="${key}">${leaveData[type].sub[key].split("：")[0]}</option>`;
-      }
-    } else {
-      subDiv.style.display = "none";
-    }
-  });
-
-  // 顯示資訊
-  function showInfo() {
-    const type = document.getElementById("leaveType").value;
-    const sub = document.getElementById("subOption").value;
-    const resultBox = document.getElementById("resultBox");
-
-    if (!type) {
-      alert("請先選擇假別！");
-      return;
     }
 
-    let output = "";
-    if (leaveData[type].info) {
-      output = leaveData[type].info;
-    } else if (leaveData[type].sub && sub) {
-      output = leaveData[type].sub[sub];
-    } else {
-      output = "請選擇細項！";
-    }
+    function showResult() {
+      const type = document.getElementById("leaveType").value;
+      if (!type) return;
 
-    resultBox.style.display = "block";
-    resultBox.innerHTML = output;
-  }
-</script>
+      const data = leaveData[type].result;
+      document.getElementById("days").innerText = `給假天數：${data.days}`;
+      document.getElementById("pay").innerText = `是否給薪：${data.pay}`;
+      document.getElementById("note").innerText = `補充：${data.note}`;
+
+      document.getElementById("resultBox").classList.remove("hidden");
+      document.getElementById("parttimeBox").classList.remove("hidden");
+    }
+  </script>
 
 </body>
 </html>
