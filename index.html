@@ -3,173 +3,144 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>勞動假別查詢</title>
+  <title>法定假別查詢系統</title>
   <style>
     body {
       font-family: Arial, "微軟正黑體", sans-serif;
-      background-color: #f9f9f9;
-      padding: 20px;
-      max-width: 700px;
+      max-width: 600px;
       margin: 0 auto;
+      padding: 20px;
+      background: #f9f9f9;
+      color: #333;
     }
-    h2 { text-align: center; margin-bottom: 20px; }
+    h2 { text-align: center; }
     select, button {
-      font-size: 18px;
-      padding: 8px;
-      margin: 10px 0;
       width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      font-size: 16px;
     }
-    .box {
-      margin-top: 15px;
-      padding: 12px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
+    .result {
+      margin-top: 20px;
+      padding: 15px;
       background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
-    .hidden { display: none; }
-    .note { color: #b22222; font-size: 14px; margin-top: 8px; }
   </style>
 </head>
 <body>
+  <h2>法定假別查詢系統</h2>
 
-  <h2>勞動假別查詢</h2>
-
-  <!-- 第一層假別 -->
+  <!-- 主選單 -->
   <label for="leaveType">選擇假別：</label>
-  <select id="leaveType" onchange="showInfo()">
-    <option value="">請選擇</option>
+  <select id="leaveType">
+    <option value="">--請選擇--</option>
+    <option value="病假">病假（含生理假）</option>
+    <option value="事假">事假（含家庭照顧假）</option>
+    <option value="特別休假">特別休假</option>
+    <option value="喪假">喪假</option>
+    <option value="原住民族歲時祭儀假">原住民族歲時祭儀假</option>
   </select>
 
-  <!-- 第二層（有子類別才顯示） -->
-  <div id="subOptionDiv" style="display:none; margin-top:10px;">
-    <label for="subOption">請選擇細項：</label>
-    <select id="subOption"></select>
+  <!-- 子選單（動態出現） -->
+  <div id="subtypeContainer" style="display:none;">
+    <label for="subtype">選擇子類別：</label>
+    <select id="subtype"></select>
   </div>
 
-  <!-- 查詢按鈕 -->
   <button onclick="showResult()">查詢</button>
 
-  <!-- 結果 -->
-  <div id="resultBox" class="box hidden">
-    <h3>查詢結果</h3>
-    <p id="days"></p>
-    <p id="pay"></p>
-    <p id="fullAttendance"></p>
-    <p id="proof"></p>
-    <p id="note"></p>
+  <div id="result" class="result" style="display:none;"></div>
 
-    <!-- 部分工時 -->
-    <button id="parttimeBtn" style="display:none; margin-top:10px;" onclick="toggleParttime()">查看部分工時計算</button>
-    <div id="parttimeInfo" style="display:none; margin-top:10px; padding:10px; border:1px dashed #999;">
-      <h4>部分工時計算公式</h4>
-      <p>部分工時假別天數 ＝ (實際月工時 ÷ 174) × 法定天數</p>
-      <p class="note">例：80 ÷ 174 ≈ 0.46 → 特休 3 天 × 0.46 = 約 1.4 天</p>
-    </div>
-  </div>
+  <script>
+    const leaveData = {
+      "病假": {
+        "subtypes": {
+          "普通傷病假（非住院）": { days:"30日/年", pay:"無薪", proof:"醫師診斷證明" },
+          "普通傷病假（住院）": { days:"1年內不超過1年", pay:"無薪", proof:"住院證明" },
+          "生理假": { days:"1日/月，不超過3日/年", pay:"無薪，不扣全勤", proof:"免證明" }
+        }
+      },
+      "事假": {
+        "subtypes": {
+          "事假": { days:"14日/年", hours:"112小時", pay:"無薪", proof:"事由說明" },
+          "家庭照顧假": { days:"7日/年（併入事假）", pay:"無薪", proof:"需家庭照顧原因" }
+        }
+      },
+      "特別休假": {
+        "subtypes": {
+          "0.5年": { days:"3日", pay:"有薪", proof:"免證明" },
+          "1年": { days:"7日", pay:"有薪", proof:"免證明" },
+          "2年": { days:"10日", pay:"有薪", proof:"免證明" },
+          "3年": { days:"14日", pay:"有薪", proof:"免證明" },
+          "5年": { days:"15日", pay:"有薪", proof:"免證明" },
+          "10年以上": { days:"16-30日", pay:"有薪", proof:"免證明" }
+        }
+      },
+      "喪假": {
+        "subtypes": {
+          "父母、配偶、子女": { days:"8日", pay:"有薪", proof:"死亡證明/訃聞" },
+          "祖父母、兄弟姊妹": { days:"6日", pay:"有薪", proof:"死亡證明/訃聞" },
+          "曾祖父母、配偶父母": { days:"3日", pay:"有薪", proof:"死亡證明/訃聞" }
+        }
+      },
+      "原住民族歲時祭儀假": {
+        days:"3日",
+        pay:"有薪",
+        fullAttendance:"不扣",
+        proof:"戶口名簿（註明族別與親屬關係）"
+      }
+    };
 
-<script>
-// === 假別資料庫 ===
-const leaveData = {
-  "事假": { days:"14日/年", pay:"無薪", fullAttendance:"可扣", proof:"主管可要求證明", note:"一年不得超過14日" },
-  "家庭照顧假": { days:"7日/年 (併入事假)", pay:"無薪", fullAttendance:"不扣", proof:"醫療或事故證明" },
-  "病假": {
-    subtypes: {
-      "未住院": { days:"30日/年", pay:"半薪", fullAttendance:"可扣", proof:"診斷書或就醫證明" },
-      "住院": { days:"2年內不超過1年", pay:"前30日半薪，超過無薪", fullAttendance:"可扣", proof:"住院證明" }
+    const leaveTypeSelect = document.getElementById("leaveType");
+    const subtypeContainer = document.getElementById("subtypeContainer");
+    const subtypeSelect = document.getElementById("subtype");
+    const resultDiv = document.getElementById("result");
+
+    leaveTypeSelect.addEventListener("change", function() {
+      const type = this.value;
+      resultDiv.style.display = "none"; // 選項切換時隱藏舊結果
+      if (type && leaveData[type]?.subtypes) {
+        subtypeContainer.style.display = "block";
+        subtypeSelect.innerHTML = "";
+        Object.keys(leaveData[type].subtypes).forEach(sub => {
+          const opt = document.createElement("option");
+          opt.value = sub;
+          opt.textContent = sub;
+          subtypeSelect.appendChild(opt);
+        });
+      } else {
+        subtypeContainer.style.display = "none";
+        subtypeSelect.innerHTML = "";
+      }
+    });
+
+    function showResult() {
+      const type = leaveTypeSelect.value;
+      const subtype = subtypeSelect.value;
+      let data;
+      if (!type) {
+        alert("請先選擇假別！");
+        return;
+      }
+      if (subtype) {
+        data = leaveData[type].subtypes[subtype];
+      } else {
+        data = leaveData[type];
+      }
+      if (!data) return;
+
+      let html = `<h3>${type}${subtype ? " - " + subtype : ""}</h3>`;
+      if (data.days) html += `<p><b>給假天數：</b>${data.days}</p>`;
+      if (data.hours) html += `<p><b>請假單位：</b>${data.hours}</p>`;
+      if (data.pay) html += `<p><b>給薪狀況：</b>${data.pay}</p>`;
+      if (data.fullAttendance) html += `<p><b>全勤影響：</b>${data.fullAttendance}</p>`;
+      if (data.proof) html += `<p><b>所需憑證：</b>${data.proof}</p>`;
+
+      resultDiv.innerHTML = html;
+      resultDiv.style.display = "block";
     }
-  },
-  "公傷病假": { days:"2年內", pay:"全薪", fullAttendance:"不扣", proof:"職災相關文件" },
-  "婚假": { days:"8日", pay:"有薪", fullAttendance:"不扣", proof:"結婚登記文件" },
-  "喪假": {
-    subtypes: {
-      "父母/配偶": { days:"8日", pay:"有薪", fullAttendance:"不扣", proof:"死亡證明" },
-      "祖父母/子女/配偶父母": { days:"6日", pay:"有薪", fullAttendance:"不扣", proof:"死亡證明" },
-      "曾祖父母/兄弟姐妹/孫子女": { days:"3日", pay:"有薪", fullAttendance:"不扣", proof:"死亡證明" }
-    }
-  },
-  "產假": {
-    subtypes: {
-      "生產": { days:"8週", pay:"滿6個月全薪，未滿6個月半薪", fullAttendance:"不扣", proof:"出生證明" },
-      "流產(3個月以上)": { days:"4週", pay:"有薪", fullAttendance:"不扣", proof:"診斷書" },
-      "流產(2-3個月)": { days:"1週", pay:"無薪", fullAttendance:"不扣", proof:"診斷書" },
-      "流產(未滿2個月)": { days:"5日", pay:"無薪", fullAttendance:"不扣", proof:"診斷書" }
-    }
-  },
-  "產檢假": { days:"7日", pay:"有薪", fullAttendance:"不扣", proof:"媽媽手冊" },
-  "陪產檢及陪產假": { days:"7日", pay:"有薪", fullAttendance:"不扣", proof:"出生證明" },
-  "生理假": { days:"每月1日", pay:"前3日半薪，第4日起無薪", fullAttendance:"不扣" },
-  "特別休假": { days:"依年資3-30日", pay:"有薪", fullAttendance:"不扣", note:"年度未休可折算薪資" },
-  "公假": { days:"依政府規定", pay:"有薪", fullAttendance:"不扣" },
-  "防疫照顧假": { days:"依需求", pay:"無薪", fullAttendance:"不扣" },
-  "疫苗接種假": { days:"每劑2日", pay:"半薪", fullAttendance:"不扣" },
-  "天災停班日": { days:"依政府宣布", pay:"有薪", fullAttendance:"不扣" },
-  "育嬰留職停薪": { days:"最長2年", pay:"無薪", fullAttendance:"不適用" }
-};
-
-// === 初始化假別清單 ===
-window.onload = () => {
-  const leaveType = document.getElementById("leaveType");
-  for (let key in leaveData) {
-    leaveType.innerHTML += `<option value="${key}">${key}</option>`;
-  }
-};
-
-// === 假別選擇 ===
-function showInfo() {
-  const type = document.getElementById("leaveType").value;
-  const subDiv = document.getElementById("subOptionDiv");
-  const subSelect = document.getElementById("subOption");
-
-  document.getElementById("resultBox").classList.add("hidden");
-  subDiv.style.display = "none";
-  subSelect.innerHTML = "";
-
-  if (type && leaveData[type].subtypes) {
-    subDiv.style.display = "block";
-    subSelect.innerHTML = "<option value=''>請選擇</option>";
-    for (let key in leaveData[type].subtypes) {
-      subSelect.innerHTML += `<option value="${key}">${key}</option>`;
-    }
-  }
-}
-
-// === 顯示結果 ===
-function showResult() {
-  const type = document.getElementById("leaveType").value;
-  const sub = document.getElementById("subOption").value;
-  let data;
-
-  if (!type) { alert("請先選擇假別！"); return; }
-  if (leaveData[type].subtypes) {
-    if (!sub) { alert("請選擇細項！"); return; }
-    data = leaveData[type].subtypes[sub];
-  } else {
-    data = leaveData[type];
-  }
-
-  document.getElementById("days").innerText = `給假天數：${data.days || "-"}`;
-  document.getElementById("pay").innerText = `是否給薪：${data.pay || "-"}`;
-  document.getElementById("fullAttendance").innerText = `是否影響全勤：${data.fullAttendance || "-"}`;
-  document.getElementById("proof").innerText = `憑證需求：${data.proof || "-"}`;
-  document.getElementById("note").innerText = data.note ? `補充：${data.note}` : "";
-
-  document.getElementById("resultBox").classList.remove("hidden");
-
-  // 部分工時：只針對需要比例計算的假別顯示按鈕
-  if (["特別休假","產假","家庭照顧假"].includes(type)) {
-    document.getElementById("parttimeBtn").style.display = "inline-block";
-  } else {
-    document.getElementById("parttimeBtn").style.display = "none";
-    document.getElementById("parttimeInfo").style.display = "none";
-  }
-}
-
-// === 部分工時展開/收合 ===
-function toggleParttime() {
-  const partDiv = document.getElementById("parttimeInfo");
-  partDiv.style.display = (partDiv.style.display === "none") ? "block" : "none";
-}
-</script>
-
+  </script>
 </body>
 </html>
