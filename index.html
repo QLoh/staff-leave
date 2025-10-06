@@ -27,6 +27,19 @@
       border-radius: 8px;
       box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
+    details {
+      margin-top: 15px;
+    }
+    summary {
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .subbox {
+      margin-top: 10px;
+      padding: 10px;
+      background: #f4f8ff;
+      border-left: 4px solid #5a8dee;
+    }
   </style>
 </head>
 <body>
@@ -56,125 +69,108 @@
 
   <div id="result" class="result" style="display:none;"></div>
 
-  <!-- 部分工時公式 -->
-  <div id="partTimeRules" class="result" style="display:none;">
-    <h3>部分工時請假換算規則</h3>
-    <p><b>計算公式：</b></p>
-    <ul>
-      <li>特休假：特休日數 × (週工時 ÷ 40)</li>
-      <li>事假、婚假、喪假、陪產假、原住民族歲時祭儀假：假日數 × (週工時 ÷ 40)</li>
-      <li>病假、安胎假：日工時 = 週工時 ÷ 每週出勤日數，再依「半薪 / 無薪」計算</li>
-      <li>生理假：當日排定工時 × 50% 給薪</li>
-      <li>產假：週工時 × 對應週數（順產 8 週；流產依孕期不同週數）</li>
-    </ul>
-    <p><b>附註提醒：</b></p>
-    <ul>
-      <li>部分工時依比例計算，不得低於勞基法規定的基本假日數。</li>
-      <li>「曆日假別」如產假、生理假，應依週工時或當日班表換算。</li>
-      <li>各假別之給薪狀態（全薪 / 半薪 / 無薪），仍依法律規定與工作規則執行。</li>
-      <li>公司應在工作規則明訂換算方式，以避免勞資爭議。</li>
-    </ul>
-  </div>
-
   <script>
     const leaveData = {
       "病假": {
-        subtypes: {
-          "普通病假": {
-            days: "1年內30日（含未住院）",
-            pay: "前30日半薪，其後無薪",
-            proof: "醫師診斷證明",
-            note: "未住院部分全年最多30日"
+        "subtypes": {
+          "普通傷病假（未住院）": {
+            days: "一年內最多 30 日",
+            pay: "前 30 日半薪；超過部分無薪",
+            fullAttendance: "可扣",
+            proof: "醫師診斷或就醫證明"
           },
-          "住院病假": {
-            days: "1年內最長1年",
-            pay: "前30日半薪，其後無薪",
-            proof: "醫師診斷證明＋住院證明",
-            note: "住院可合併計算"
+          "普通傷病假（住院）": {
+            days: "與安胎假合併，二年內合計不得超過 1 年",
+            pay: "前 30 日半薪；超過 30 日無薪",
+            fullAttendance: "可扣",
+            proof: "住院證明"
           },
           "生理假": {
-            days: "每月1日，全年最多3日",
+            days: "每月 1 日，全年最多 3 日（獨立額度）；第 4 次起併入病假",
             pay: "半薪",
-            proof: "不需證明（雇主不得要求）",
-            note: "第4日後併入病假計算"
+            fullAttendance: "不扣",
+            proof: "免證明"
+          },
+          "安胎假": {
+            days: "併入住院病假額度計算；二年內與住院合計不得超過 1 年",
+            pay: "依病假規則（前 30 日半薪；超過無薪）",
+            fullAttendance: "不扣",
+            proof: "醫師證明"
+          },
+          "公傷病假（職災）": {
+            days: "醫療期間",
+            pay: "工資照給（得與勞保給付抵充）",
+            fullAttendance: "不扣",
+            proof: "職災相關文件"
           }
         }
       },
       "事假": {
-        days: "每年14日",
-        pay: "無薪",
-        proof: "事假單",
-        note: "家庭照顧假併入此天數；可依小時請假（112小時）"
+        "subtypes": {
+          "事假": { days:"14日/年", hours:"112小時", pay:"無薪", proof:"事由說明" },
+          "家庭照顧假": { days:"7日/年（併入事假）", pay:"無薪", proof:"需家庭照顧原因" }
+        }
       },
       "特別休假": {
-        note: "依年資給假，3日至30日",
-        proof: "年資計算資料",
-        pay: "有薪"
+        "subtypes": {
+          "0.5年": { days:"3日", pay:"有薪", proof:"免證明" },
+          "1年": { days:"7日", pay:"有薪", proof:"免證明" },
+          "2年": { days:"10日", pay:"有薪", proof:"免證明" },
+          "3年": { days:"14日", pay:"有薪", proof:"免證明" },
+          "5年": { days:"15日", pay:"有薪", proof:"免證明" },
+          "10年以上": { days:"16-30日", pay:"有薪", proof:"免證明" }
+        }
       },
       "喪假": {
-        subtypes: {
-          "父母、養父母、配偶": {
-            days: "8日",
-            pay: "有薪",
-            proof: "死亡證明及關係證明"
-          },
-          "祖父母、兄弟姊妹": {
-            days: "6日",
-            pay: "有薪",
-            proof: "死亡證明及關係證明"
-          },
-          "曾祖父母、配偶祖父母": {
-            days: "3日",
-            pay: "有薪",
-            proof: "死亡證明及關係證明"
-          }
+        "subtypes": {
+          "父母（含養繼）、配偶、子女": { days:"8日", pay:"有薪", proof:"死亡證明/訃聞" },
+          "祖父母、兄弟姊妹": { days:"6日", pay:"有薪", proof:"死亡證明/訃聞" },
+          "曾祖父母、配偶父母": { days:"3日", pay:"有薪", proof:"死亡證明/訃聞" }
         }
       },
       "產假": {
-        subtypes: {
-          "懷孕未滿2月流產": {
-            days: "5日",
-            pay: "無薪",
-            proof: "醫師診斷證明"
+        "subtypes": {
+          "順產": { 
+            days: "8週", 
+            pay: "受僱滿6個月者工資照給；未滿6個月者半薪", 
+            proof: "出生證明或醫師診斷書" 
           },
-          "懷孕2月以上未滿3月流產": {
-            days: "7日",
-            pay: "無薪",
-            proof: "醫師診斷證明"
+          "流產（未滿2個月）": { 
+            days: "5日", 
+            pay: "無薪", 
+            proof: "醫師診斷書" 
           },
-          "懷孕3月以上未滿6月流產": {
-            days: "4週",
-            pay: "有薪",
-            proof: "醫師診斷證明"
+          "流產（滿2個月至未滿3個月）": { 
+            days: "1週", 
+            pay: "無薪", 
+            proof: "醫師診斷書" 
           },
-          "懷孕6月以上流產": {
-            days: "8週",
-            pay: "有薪",
-            proof: "醫師診斷證明"
-          },
-          "分娩": {
-            days: "8週",
-            pay: "有薪（工作未滿6個月者發半薪）",
-            proof: "出生證明或媽媽手冊"
+          "流產（滿3個月以上）": { 
+            days: "4週", 
+            pay: "受僱滿6個月者工資照給；未滿6個月者半薪", 
+            proof: "醫師診斷書" 
           }
         }
       },
       "陪產檢及陪產假": {
-        days: "7日",
+        days: "7日（可分開使用）",
         pay: "有薪",
-        proof: "媽媽手冊或出生證明",
-        note: "陪產檢假於懷孕期間請；陪產假於分娩當日及前後15日內請"
+        proof: "出生證明或媽媽手冊",
+        note: "陪產檢假應於配偶懷孕期間申請；陪產假應於配偶分娩當日及前後合計15日內請休"
       },
       "婚假": {
         days: "8日",
         pay: "有薪",
-        proof: "結婚登記證明"
+        fullAttendance: "不扣",
+        proof: "結婚登記證明",
+        note: "應於結婚登記日前10日起至3個月內請畢；主管同意可延長至一年內請畢"
       },
       "原住民族歲時祭儀假": {
-        days: "3日",
-        pay: "有薪",
-        proof: "戶口名簿或族別證明",
-        note: "可請自己、配偶、父母的祭儀日，不扣全勤"
+        days:"3日",
+        pay:"有薪",
+        fullAttendance:"不扣",
+        proof:"戶口名簿（註明族別與親屬關係）",
+        note: "員工本人為原住民，可請本人、配偶或父母所屬之原住民族歲時祭儀日"
       }
     };
 
@@ -182,12 +178,10 @@
     const subtypeContainer = document.getElementById("subtypeContainer");
     const subtypeSelect = document.getElementById("subtype");
     const resultDiv = document.getElementById("result");
-    const partTimeDiv = document.getElementById("partTimeRules");
 
     leaveTypeSelect.addEventListener("change", function() {
       const type = this.value;
       resultDiv.style.display = "none";
-      partTimeDiv.style.display = "none";
       if (type && leaveData[type]?.subtypes) {
         subtypeContainer.style.display = "block";
         subtypeSelect.innerHTML = "";
@@ -226,11 +220,19 @@
       if (data.proof) html += `<p><b>所需憑證：</b>${data.proof}</p>`;
       if (data.note) html += `<p><b>補充：</b>${data.note}</p>`;
 
+      // 新增部分工時換算說明 (固定顯示)
+      html += `
+        <details>
+          <summary>部分工時換算說明</summary>
+          <div class="subbox">
+            <p><b>公式：</b>假別天數 × (週工時 ÷ 40)</p>
+            <p><b>案例：</b>李小姐週工時 20 小時，陪產假 7 日 → 7 × (20 ÷ 40) = 3.5 日 ≈ 28 小時</p>
+          </div>
+        </details>
+      `;
+
       resultDiv.innerHTML = html;
       resultDiv.style.display = "block";
-
-      // 顯示部分工時規則
-      partTimeDiv.style.display = "block";
     }
   </script>
 </body>
