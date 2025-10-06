@@ -1,190 +1,117 @@
-<!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>勞動假別查詢</title>
-  <style>
-    body {
-      font-family: Arial, "微軟正黑體", sans-serif;
-      background-color: #f5f5f5;
-      margin: 0;
-      padding: 20px;
-    }
-    .container {
-      max-width: 600px;
-      margin: 0 auto;
-      background: #fff;
-      padding: 20px 30px;
-      border-radius: 10px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    }
-    h1 { text-align: center; margin-bottom: 20px; }
-    label { display: block; margin-top: 12px; }
-    select {
-      width: 100%;
-      padding: 10px;
-      margin-top: 6px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-    }
-    button {
-      margin-top: 15px;
-      padding: 10px 20px;
-      background: #333;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-    button:hover { background: #555; }
-    .output {
-      margin-top: 20px;
-      padding: 12px;
-      border: 1px solid #ddd;
-      border-radius: 6px;
-      background: #fafafa;
-    }
-    .note {
-      margin-top: 20px;
-      font-size: 14px;
-      color: #555;
-    }
-    .note strong { color: #b22222; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <h1>勞動假別查詢</h1>
+function showSubOptions() {
+  const type = document.getElementById("leaveType").value;
+  const subDiv = document.getElementById("subOptions");
 
-    <!-- 假別選單 -->
-    <label>選擇假別：
-      <select id="leaveType" onchange="showSubOptions()">
-        <option value="">請選擇</option>
-        <option value="annual">特休假</option>
-        <option value="sick">病假</option>
-        <option value="personal">事假</option>
-        <option value="marriage">婚假</option>
-        <option value="bereavement">喪假</option>
-      </select>
-    </label>
+  // 清空舊結果
+  document.getElementById("result").innerHTML = "";
+  subDiv.innerHTML = "";
+  subDiv.style.display = "none";
 
-    <!-- 動態次屬性選單 -->
-    <div id="subOptions" style="display:none; margin-top:10px;"></div>
+  // 特休 → 出現年資選單
+  if (type === "annual") {
+    subDiv.innerHTML = `
+      <label>請選擇年資：
+        <select id="years" onchange="calcLeave()">
+          <option value="">請選擇</option>
+          <option value="0.5">滿半年未滿1年</option>
+          <option value="1">滿1年未滿2年</option>
+          <option value="2">滿2年未滿3年</option>
+          <option value="3">滿3年未滿5年</option>
+          <option value="5">滿5年未滿10年</option>
+          <option value="10">滿10年以上</option>
+        </select>
+      </label>`;
+    subDiv.style.display = "block";
+  }
 
-    <button onclick="calcLeave()">查詢</button>
+  // 喪假 → 出現親屬選單
+  else if (type === "bereavement") {
+    subDiv.innerHTML = `
+      <label>請選擇親屬：
+        <select id="relation" onchange="calcLeave()">
+          <option value="">請選擇</option>
+          <option value="parent">父母、養父母、配偶（8日）</option>
+          <option value="grandparent">祖父母、兄弟姊妹、子女（6日）</option>
+          <option value="greatgrand">曾祖父母、外祖父母（3日）</option>
+        </select>
+      </label>`;
+    subDiv.style.display = "block";
+  }
 
-    <div id="result" class="output"></div>
+  // 其他假別 → 直接顯示
+  else if (type) {
+    calcLeave();
+  }
+}
 
-    <div class="note">
-      <p><strong>⚠️ 提醒：</strong>本工具僅供參考，實際計算請依《勞基法》及勞動部公告。</p>
-    </div>
-  </div>
+function calcLeave() {
+  const type = document.getElementById("leaveType").value;
+  let result = "";
 
-  <script>
-    function showSubOptions() {
-      const type = document.getElementById("leaveType").value;
-      const subDiv = document.getElementById("subOptions");
-      subDiv.innerHTML = "";
-      subDiv.style.display = "none";
+  if (type === "annual") {
+    const years = document.getElementById("years").value;
+    if (!years) return; // 沒選年資就不算
+    let days = 0;
+    if (years == 0.5) days = 3;
+    else if (years == 1) days = 7;
+    else if (years == 2) days = 10;
+    else if (years == 3) days = 14;
+    else if (years == 5) days = 15;
+    else if (years == 10) days = 30;
 
-      if (type === "annual") {
-        subDiv.innerHTML = `
-          <label>請選擇年資：
-            <select id="years">
-              <option value="0.5">滿半年未滿1年</option>
-              <option value="1">滿1年未滿2年</option>
-              <option value="2">滿2年未滿3年</option>
-              <option value="3">滿3年未滿5年</option>
-              <option value="5">滿5年未滿10年</option>
-              <option value="10">滿10年以上</option>
-            </select>
-          </label>`;
-        subDiv.style.display = "block";
-      }
+    result = `
+      <p>假別：特休假</p>
+      <p>年資：${years} 年級距</p>
+      <p>天數：${days} 天</p>
+      <p>是否給薪：✅ 有薪</p>
+      <p>是否可扣全勤：❌ 不得因休特休影響全勤獎金</p>
+      <p>部分工時：依工時計算比例（例：工時/174）</p>
+    `;
+  }
 
-      if (type === "bereavement") {
-        subDiv.innerHTML = `
-          <label>請選擇親屬：
-            <select id="relation">
-              <option value="parent">父母、養父母、配偶（8日）</option>
-              <option value="grandparent">祖父母、兄弟姊妹、子女（6日）</option>
-              <option value="greatgrand">曾祖父母、外祖父母（3日）</option>
-            </select>
-          </label>`;
-        subDiv.style.display = "block";
-      }
-    }
+  if (type === "sick") {
+    result = `
+      <p>假別：病假</p>
+      <p>一年內不超過30日（部分有薪）。</p>
+      <p>是否給薪：⚠️ 住院與非住院不同，依規定計算</p>
+      <p>是否可扣全勤：✅ 可扣</p>
+    `;
+  }
 
-    function calcLeave() {
-      const type = document.getElementById("leaveType").value;
-      let result = "";
+  if (type === "personal") {
+    result = `
+      <p>假別：事假</p>
+      <p>一年內合計不得超過14日。</p>
+      <p>是否給薪：❌ 無薪</p>
+      <p>是否可扣全勤：✅ 可扣</p>
+    `;
+  }
 
-      if (type === "annual") {
-        const years = document.getElementById("years").value;
-        let days = 0;
-        if (years == 0.5) days = 3;
-        else if (years == 1) days = 7;
-        else if (years == 2) days = 10;
-        else if (years == 3) days = 14;
-        else if (years == 5) days = 15;
-        else if (years == 10) days = 30;
+  if (type === "marriage") {
+    result = `
+      <p>假別：婚假</p>
+      <p>天數：8日</p>
+      <p>是否給薪：✅ 有薪</p>
+      <p>是否可扣全勤：❌ 不得因休婚假影響全勤獎金</p>
+    `;
+  }
 
-        result = `
-          <p>假別：特休假</p>
-          <p>年資：${years} 年級距</p>
-          <p>天數：${days} 天</p>
-          <p>是否給薪：✅ 有薪</p>
-          <p>是否可扣全勤：❌ 不得因休特休影響全勤獎金</p>
-          <p>部分工時：依工時計算比例（例：工時/174）</p>
-        `;
-      }
+  if (type === "bereavement") {
+    const relation = document.getElementById("relation").value;
+    if (!relation) return;
+    let days = 0;
+    if (relation === "parent") days = 8;
+    if (relation === "grandparent") days = 6;
+    if (relation === "greatgrand") days = 3;
 
-      if (type === "sick") {
-        result = `
-          <p>假別：病假</p>
-          <p>一年內不超過30日（部分有薪）。</p>
-          <p>是否給薪：⚠️ 住院與非住院不同，依規定計算</p>
-          <p>是否可扣全勤：✅ 可扣</p>
-        `;
-      }
+    result = `
+      <p>假別：喪假</p>
+      <p>親屬別：${document.getElementById("relation").selectedOptions[0].text}</p>
+      <p>天數：${days} 日</p>
+      <p>是否給薪：✅ 有薪</p>
+      <p>是否可扣全勤：❌ 不得因休喪假影響全勤獎金</p>
+    `;
+  }
 
-      if (type === "personal") {
-        result = `
-          <p>假別：事假</p>
-          <p>一年內合計不得超過14日。</p>
-          <p>是否給薪：❌ 無薪</p>
-          <p>是否可扣全勤：✅ 可扣</p>
-        `;
-      }
-
-      if (type === "marriage") {
-        result = `
-          <p>假別：婚假</p>
-          <p>天數：8日</p>
-          <p>是否給薪：✅ 有薪</p>
-          <p>是否可扣全勤：❌ 不得因休婚假影響全勤獎金</p>
-        `;
-      }
-
-      if (type === "bereavement") {
-        const relation = document.getElementById("relation").value;
-        let days = 0;
-        if (relation === "parent") days = 8;
-        if (relation === "grandparent") days = 6;
-        if (relation === "greatgrand") days = 3;
-
-        result = `
-          <p>假別：喪假</p>
-          <p>親屬別：${document.getElementById("relation").selectedOptions[0].text}</p>
-          <p>天數：${days} 日</p>
-          <p>是否給薪：✅ 有薪</p>
-          <p>是否可扣全勤：❌ 不得因休喪假影響全勤獎金</p>
-        `;
-      }
-
-      document.getElementById("result").innerHTML = result;
-    }
-  </script>
-</body>
-</html>
+  document.getElementById("result").innerHTML = result;
+}
