@@ -40,10 +40,13 @@
     <option value="事假">事假（含家庭照顧假）</option>
     <option value="特別休假">特別休假</option>
     <option value="喪假">喪假</option>
+    <option value="產假">產假</option>
+    <option value="陪產檢及陪產假">陪產檢及陪產假</option>
+    <option value="婚假">婚假</option>
     <option value="原住民族歲時祭儀假">原住民族歲時祭儀假</option>
   </select>
 
-  <!-- 子選單（動態出現） -->
+  <!-- 子選單 -->
   <div id="subtypeContainer" style="display:none;">
     <label for="subtype">選擇子類別：</label>
     <select id="subtype"></select>
@@ -57,9 +60,36 @@
     const leaveData = {
       "病假": {
         "subtypes": {
-          "普通傷病假（非住院）": { days:"30日/年", pay:"無薪", proof:"醫師診斷證明" },
-          "普通傷病假（住院）": { days:"1年內不超過1年", pay:"無薪", proof:"住院證明" },
-          "生理假": { days:"1日/月，不超過3日/年", pay:"無薪，不扣全勤", proof:"免證明" }
+          "普通傷病假（未住院）": {
+            days: "一年內最多 30 日",
+            pay: "前 30 日半薪；超過部分無薪",
+            fullAttendance: "不扣",
+            proof: "醫師診斷或就醫證明"
+          },
+          "普通傷病假（住院）": {
+            days: "與安胎假合併，二年內合計不得超過 1 年",
+            pay: "前 30 日半薪；超過 30 日無薪",
+            fullAttendance: "不扣",
+            proof: "住院證明"
+          },
+          "生理假": {
+            days: "每月 1 日，全年最多 3 日（獨立額度）；第 4 次起併入病假",
+            pay: "半薪",
+            fullAttendance: "不扣",
+            proof: "免證明"
+          },
+          "安胎假": {
+            days: "併入住院病假額度計算；二年內與住院合計不得超過 1 年",
+            pay: "依病假規則（前 30 日半薪；超過無薪）",
+            fullAttendance: "不扣",
+            proof: "醫師證明"
+          },
+          "公傷病假（職災）": {
+            days: "醫療期間",
+            pay: "工資照給（得與勞保給付抵充）",
+            fullAttendance: "不扣",
+            proof: "職災相關文件"
+          }
         }
       },
       "事假": {
@@ -85,6 +115,43 @@
           "曾祖父母、配偶父母": { days:"3日", pay:"有薪", proof:"死亡證明/訃聞" }
         }
       },
+      "產假": {
+        "subtypes": {
+          "正常分娩": { 
+            days: "8週", 
+            pay: "受僱滿6個月者工資照給；未滿6個月者半薪", 
+            proof: "出生證明或醫師診斷書" 
+          },
+          "流產（未滿2個月）": { 
+            days: "5日", 
+            pay: "無薪", 
+            proof: "醫師診斷書" 
+          },
+          "流產（滿2個月至未滿3個月）": { 
+            days: "1週", 
+            pay: "無薪", 
+            proof: "醫師診斷書" 
+          },
+          "流產（滿3個月以上）": { 
+            days: "4週", 
+            pay: "受僱滿6個月者工資照給；未滿6個月者半薪", 
+            proof: "醫師診斷書" 
+          }
+        }
+      },
+      "陪產檢及陪產假": {
+        days: "7日（可分開使用）",
+        pay: "有薪",
+        proof: "出生證明或媽媽手冊",
+        note: "陪產檢假應於配偶懷孕期間申請；陪產假應於配偶分娩當日及前後合計15日內請休"
+      },
+      "婚假": {
+        days: "8日",
+        pay: "有薪",
+        fullAttendance: "不扣",
+        proof: "結婚登記證明",
+        note: "應於結婚登記日前10日起至3個月內請畢；主管同意可延長至一年內請畢"
+      },
       "原住民族歲時祭儀假": {
         days:"3日",
         pay:"有薪",
@@ -100,7 +167,7 @@
 
     leaveTypeSelect.addEventListener("change", function() {
       const type = this.value;
-      resultDiv.style.display = "none"; // 選項切換時隱藏舊結果
+      resultDiv.style.display = "none";
       if (type && leaveData[type]?.subtypes) {
         subtypeContainer.style.display = "block";
         subtypeSelect.innerHTML = "";
@@ -137,6 +204,7 @@
       if (data.pay) html += `<p><b>給薪狀況：</b>${data.pay}</p>`;
       if (data.fullAttendance) html += `<p><b>全勤影響：</b>${data.fullAttendance}</p>`;
       if (data.proof) html += `<p><b>所需憑證：</b>${data.proof}</p>`;
+      if (data.note) html += `<p><b>補充：</b>${data.note}</p>`;
 
       resultDiv.innerHTML = html;
       resultDiv.style.display = "block";
