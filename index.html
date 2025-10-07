@@ -168,9 +168,7 @@
         "流產（滿3個月以上）": { days:"4週", pay:"受僱滿6個月者工資照給；未滿6個月者半薪", fullAttendance:"不扣", proof:"醫師診斷書" }
       }
     },
-    "產檢假": {
-      days:"7日（可分次請）", pay:"有薪", fullAttendance:"不扣", proof:"媽媽手冊或醫師診斷書", note:"應於懷孕期間使用，分次請假需事先告知"
-    },
+    "產檢假": { days:"7日（可分次請）", pay:"有薪", fullAttendance:"不扣", proof:"媽媽手冊或醫師診斷書", note:"應於懷孕期間使用，分次請假需事先告知" },
     "陪產檢及陪產假": { days:"7日（可分開使用）", pay:"有薪", proof:"出生證明或媽媽手冊", fullAttendance:"不扣", note:"陪產檢假於懷孕期間請；陪產假於分娩當日及前後15日內請" },
     "婚假": { days:"8日", pay:"有薪", fullAttendance:"不扣", proof:"結婚登記證明", note:"應於結婚登記日起3個月內請畢" },
     "原住民族歲時祭儀假": { days:"3日", pay:"有薪", fullAttendance:"不扣", proof:"戶口名簿（族別與親屬關係）", note:"本人為原住民，可請本人、配偶或父母所屬族群祭儀日" }
@@ -236,8 +234,28 @@
     if (data.proof) html += `<p><b>所需憑證：</b>${data.proof}</p>`;
     if (data.note) html += `<p><b>補充：</b>${data.note}</p>`;
 
-    // 部分工時規則 (對應到假別或子項目)
-    const rule = partTimeRules[subtype || type];
+        // === 部分工時規則（精準對應） ===
+    // 沒有子項目 → 用主類；有子項目 → 只看子項目本身
+    let rule;
+    
+    if (subtype) {
+      if (type === '產假') {
+        // 產假只在「有薪」子項目顯示：順產、流產（滿3個月以上）
+        const paidSubs = new Set(['順產', '流產（滿3個月以上）']);
+        if (paidSubs.has(subtype)) {
+          rule = partTimeRules['產假'];   // 顯示產假的通用換算說明
+        } else {
+          rule = undefined;               // 其它（無薪）不顯示
+        }
+      } else {
+        // 其它假別：子項目就只對應子項目名稱
+        rule = partTimeRules[subtype];     // 不再 fallback 到主類
+      }
+    } else {
+      // 沒選子項目：顯示主類規則
+      rule = partTimeRules[type];
+    }
+    
     if (rule) {
       html += `
         <details>
@@ -246,6 +264,7 @@
         </details>
       `;
     }
+
 
     resultDiv.innerHTML = html;
     resultDiv.style.display = "block";
