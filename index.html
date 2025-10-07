@@ -90,6 +90,7 @@
     <option value="特別休假">特別休假</option>
     <option value="喪假">喪假</option>
     <option value="產假">產假</option>
+    <option value="產檢假">產檢假</option>
     <option value="陪產檢及陪產假">陪產檢及陪產假</option>
     <option value="婚假">婚假</option>
     <option value="原住民族歲時祭儀假">原住民族歲時祭儀假</option>
@@ -125,126 +126,130 @@
     </a>
   </footer>
   
-  <script>
-    const leaveData = {
-      "病假": {
-        "subtypes": {
-          "普通傷病假（未住院）": { days:"一年內最多 30 日", pay:"前 30 日半薪；超過部分無薪", fullAttendance:"可扣", proof:"醫師診斷或就醫證明" },
-          "普通傷病假（住院）": { days:"與安胎假合併，二年內合計不得超過 1 年", pay:"前 30 日半薪；超過 30 日無薪", fullAttendance:"可扣", proof:"住院證明" },
-          "生理假": { days:"每月 1 日，全年最多 3 日；第 4 次起併入病假", pay:"半薪", fullAttendance:"不扣", proof:"免證明" },
-          "安胎假": { days:"併入住院病假額度；二年內與住院合計不得超過 1 年", pay:"依病假規則", fullAttendance:"不扣", proof:"醫師證明" },
-          "公傷病假（職災）": { days:"醫療期間", pay:"工資照給（得與勞保給付抵充）", fullAttendance:"不扣", proof:"職災文件" }
-        }
-      },
-      "事假": {
-        "subtypes": {
-          "事假": { days:"14日/年", hours:"112小時", pay:"無薪", proof:"事由說明" },
-          "家庭照顧假": { days:"7日/年（併入事假）", pay:"無薪", proof:"需家庭照顧原因" }
-        }
-      },
-      "特別休假": {
-        "subtypes": {
-          "年資0.5年": { days:"3日", pay:"有薪", proof:"免證明" },
-          "年資1年": { days:"7日", pay:"有薪", proof:"免證明" },
-          "年資2年": { days:"10日", pay:"有薪", proof:"免證明" },
-          "年資3年": { days:"14日", pay:"有薪", proof:"免證明" },
-          "年資5年": { days:"15日", pay:"有薪", proof:"免證明" },
-          "年資10年以上": { days:"16-30日", pay:"有薪", proof:"免證明" }
-        }
-      },
-      "喪假": {
-        "subtypes": {
-          "父母（含養繼）、配偶、子女": { days:"8日", pay:"有薪", proof:"死亡證明/訃聞" },
-          "祖父母、兄弟姊妹": { days:"6日", pay:"有薪", proof:"死亡證明/訃聞" },
-          "曾祖父母、配偶父母": { days:"3日", pay:"有薪", proof:"死亡證明/訃聞" }
-        }
-      },
-      "產假": {
-        "subtypes": {
-          "順產": { days:"8週", pay:"受僱滿6個月者工資照給；未滿6個月者半薪", proof:"出生證明或醫師診斷書" },
-          "流產（未滿2個月）": { days:"5日", pay:"無薪", proof:"醫師診斷書" },
-          "流產（滿2個月至未滿3個月）": { days:"1週", pay:"無薪", proof:"醫師診斷書" },
-          "流產（滿3個月以上）": { days:"4週", pay:"受僱滿6個月者工資照給；未滿6個月者半薪", proof:"醫師診斷書" }
-        }
-      },
-      "陪產檢及陪產假": { days:"7日（可分開使用）", pay:"有薪", proof:"出生證明或媽媽手冊", note:"陪產檢假於懷孕期間請；陪產假於分娩當日及前後15日內請" },
-      "婚假": { days:"8日", pay:"有薪", fullAttendance:"不扣", proof:"結婚登記證明", note:"應於結婚登記日起3個月內請畢" },
-      "原住民族歲時祭儀假": { days:"3日", pay:"有薪", fullAttendance:"不扣", proof:"戶口名簿（族別與親屬關係）", note:"本人為原住民，可請本人、配偶或父母所屬族群祭儀日" }
-    };
-
-    const partTimeRules = {
-      "特別休假": "特休日數 × 全年實際總工時 ÷ 年度總工時 2088 為基準比例換算",
-      "事假": "14日 × (週工時 ÷ 40)",
-      "家庭照顧假": "併入事假額度，依比例換算",
-      "婚假": "8日 × (週工時 ÷ 40)",
-      "喪假": "假日數 × (週工時 ÷ 40)，假日數依親屬等級計算",
-      "陪產檢及陪產假": "7日 × (週工時 ÷ 40)，可分次請",
-      "病假": "日工時 = 週工時 ÷ 出勤日數，再依半薪/無薪計算",
-      "安胎假": "同病假規則，與住院病假合併計算",
-      "生理假": "完整歷日，給薪以當日排定工時 × 50% 給薪",
-      "產假": "完整歷日，給薪以週工時 × 對應週數 × 對應全薪週數"
-    };
-
-    const leaveTypeSelect = document.getElementById("leaveType");
-    const subtypeContainer = document.getElementById("subtypeContainer");
-    const subtypeSelect = document.getElementById("subtype");
-    const resultDiv = document.getElementById("result");
-
-    leaveTypeSelect.addEventListener("change", function() {
-      const type = this.value;
-      resultDiv.style.display = "none";
-      if (type && leaveData[type]?.subtypes) {
-        subtypeContainer.style.display = "block";
-        subtypeSelect.innerHTML = "";
-        Object.keys(leaveData[type].subtypes).forEach(sub => {
-          const opt = document.createElement("option");
-          opt.value = sub;
-          opt.textContent = sub;
-          subtypeSelect.appendChild(opt);
-        });
-      } else {
-        subtypeContainer.style.display = "none";
-        subtypeSelect.innerHTML = "";
+<script>
+  const leaveData = {
+    "病假": {
+      "subtypes": {
+        "普通傷病假（未住院）": { days:"一年內最多 30 日", pay:"前 30 日半薪；超過部分無薪", fullAttendance:"可扣", proof:"醫師診斷或就醫證明" },
+        "普通傷病假（住院）": { days:"與安胎假合併，二年內合計不得超過 1 年", pay:"前 30 日半薪；超過 30 日無薪", fullAttendance:"可扣", proof:"住院證明" },
+        "生理假": { days:"每月 1 日，全年最多 3 日；第 4 次起併入病假", pay:"半薪", fullAttendance:"不扣", proof:"免證明" },
+        "安胎假": { days:"併入住院病假額度；二年內與住院合計不得超過 1 年", pay:"依病假規則", fullAttendance:"不扣", proof:"醫師證明" },
+        "公傷病假（職災）": { days:"醫療期間", pay:"工資照給（得與勞保給付抵充）", fullAttendance:"不扣", proof:"職災文件" }
       }
-    });
-
-    function showResult() {
-      const type = leaveTypeSelect.value;
-      const subtype = subtypeSelect.value;
-      let data;
-      if (!type) {
-        alert("請先選擇假別！");
-        return;
+    },
+    "事假": {
+      "subtypes": {
+        "事假": { days:"14日/年", hours:"112小時", pay:"無薪", fullAttendance:"可扣", proof:"事由說明" },
+        "家庭照顧假": { days:"7日/年（併入事假）", pay:"無薪", fullAttendance:"不扣", proof:"需家庭照顧原因" }
       }
-      if (subtype) {
-        data = leaveData[type].subtypes[subtype];
-      } else {
-        data = leaveData[type];
+    },
+    "特別休假": {
+      "subtypes": {
+        "年資0.5年": { days:"3日", pay:"有薪", fullAttendance:"不扣", proof:"免證明" },
+        "年資1年": { days:"7日", pay:"有薪", fullAttendance:"不扣", proof:"免證明" },
+        "年資2年": { days:"10日", pay:"有薪", fullAttendance:"不扣", proof:"免證明" },
+        "年資3年": { days:"14日", pay:"有薪", fullAttendance:"不扣", proof:"免證明" },
+        "年資5年": { days:"15日", pay:"有薪", fullAttendance:"不扣", proof:"免證明" },
+        "年資10年以上": { days:"16-30日", pay:"有薪", fullAttendance:"不扣", proof:"免證明" }
       }
-      if (!data) return;
-
-      let html = `<h3>${type}${subtype ? " - " + subtype : ""}</h3>`;
-      if (data.days) html += `<p><b>給假天數：</b>${data.days}</p>`;
-      if (data.hours) html += `<p><b>請假單位：</b>${data.hours}</p>`;
-      if (data.pay) html += `<p><b>給薪狀況：</b>${data.pay}</p>`;
-      if (data.fullAttendance) html += `<p><b>全勤影響：</b>${data.fullAttendance}</p>`;
-      if (data.proof) html += `<p><b>所需憑證：</b>${data.proof}</p>`;
-      if (data.note) html += `<p><b>補充：</b>${data.note}</p>`;
-
-      // 部分工時規則 (對應到假別)
-      const rule = partTimeRules[subtype || type];
-      if (rule) {
-        html += `
-          <details>
-            <summary>部分工時換算說明</summary>
-            <div class="subbox">${rule}</div>
-          </details>
-        `;
+    },
+    "喪假": {
+      "subtypes": {
+        "父母（含養繼）、配偶、子女": { days:"8日", pay:"有薪", fullAttendance:"不扣", proof:"死亡證明/訃聞" },
+        "祖父母、兄弟姊妹": { days:"6日", pay:"有薪", fullAttendance:"不扣", proof:"死亡證明/訃聞" },
+        "曾祖父母、配偶父母": { days:"3日", pay:"有薪", fullAttendance:"不扣", proof:"死亡證明/訃聞" }
       }
+    },
+    "產假": {
+      "subtypes": {
+        "順產": { days:"8週", pay:"受僱滿6個月者工資照給；未滿6個月者半薪", fullAttendance:"不扣", proof:"出生證明或醫師診斷書" },
+        "流產（未滿2個月）": { days:"5日", pay:"無薪", fullAttendance:"不扣", proof:"醫師診斷書" },
+        "流產（滿2個月至未滿3個月）": { days:"1週", pay:"無薪", fullAttendance:"不扣", proof:"醫師診斷書" },
+        "流產（滿3個月以上）": { days:"4週", pay:"受僱滿6個月者工資照給；未滿6個月者半薪", fullAttendance:"不扣", proof:"醫師診斷書" }
+      }
+    },
+    "產檢假": {
+      days:"7日（可分次請）", pay:"有薪", fullAttendance:"不扣", proof:"媽媽手冊或醫師診斷書", note:"應於懷孕期間使用，分次請假需事先告知"
+    },
+    "陪產檢及陪產假": { days:"7日（可分開使用）", pay:"有薪", proof:"出生證明或媽媽手冊", fullAttendance:"不扣", note:"陪產檢假於懷孕期間請；陪產假於分娩當日及前後15日內請" },
+    "婚假": { days:"8日", pay:"有薪", fullAttendance:"不扣", proof:"結婚登記證明", note:"應於結婚登記日起3個月內請畢" },
+    "原住民族歲時祭儀假": { days:"3日", pay:"有薪", fullAttendance:"不扣", proof:"戶口名簿（族別與親屬關係）", note:"本人為原住民，可請本人、配偶或父母所屬族群祭儀日" }
+  };
 
-      resultDiv.innerHTML = html;
-      resultDiv.style.display = "block";
+  const partTimeRules = {
+    "特別休假": "特休日數 × 全年實際總工時 ÷ 年度總工時 2088 為基準比例換算",
+    "事假": "14日 × (週工時 ÷ 40)",
+    "家庭照顧假": "併入事假額度，依比例換算",
+    "婚假": "8日 × (週工時 ÷ 40)",
+    "喪假": "假日數 × (週工時 ÷ 40)，依親屬等級計算",
+    "陪產檢及陪產假": "7日 × (週工時 ÷ 40)，可分次請",
+    "病假": "日工時 = 週工時 ÷ 出勤日數，再依半薪/無薪計算",
+    "產檢假": "7日 × (週工時 ÷ 40)，可分次請",
+    "安胎假": "同病假規則，與住院病假合併計算",
+    "生理假": "完整歷日，給薪以當日排定工時 × 50% 給薪",
+    "產假": "完整歷日，給薪以週工時 ÷ 40 × 對應週數"
+  };
+
+  const leaveTypeSelect = document.getElementById("leaveType");
+  const subtypeContainer = document.getElementById("subtypeContainer");
+  const subtypeSelect = document.getElementById("subtype");
+  const resultDiv = document.getElementById("result");
+
+  leaveTypeSelect.addEventListener("change", function() {
+    const type = this.value;
+    resultDiv.style.display = "none";
+    if (type && leaveData[type]?.subtypes) {
+      subtypeContainer.style.display = "block";
+      subtypeSelect.innerHTML = "";
+      Object.keys(leaveData[type].subtypes).forEach(sub => {
+        const opt = document.createElement("option");
+        opt.value = sub;
+        opt.textContent = sub;
+        subtypeSelect.appendChild(opt);
+      });
+    } else {
+      subtypeContainer.style.display = "none";
+      subtypeSelect.innerHTML = "";
     }
-  </script>
+  });
+
+  function showResult() {
+    const type = leaveTypeSelect.value;
+    const subtype = subtypeSelect.value;
+    let data;
+    if (!type) {
+      alert("請先選擇假別！");
+      return;
+    }
+    if (subtype) {
+      data = leaveData[type].subtypes[subtype];
+    } else {
+      data = leaveData[type];
+    }
+    if (!data) return;
+
+    let html = `<h3>${type}${subtype ? " - " + subtype : ""}</h3>`;
+    if (data.days) html += `<p><b>給假天數：</b>${data.days}</p>`;
+    if (data.hours) html += `<p><b>請假單位：</b>${data.hours}</p>`;
+    if (data.pay) html += `<p><b>給薪狀況：</b>${data.pay}</p>`;
+    if (data.fullAttendance) html += `<p><b>全勤影響：</b>${data.fullAttendance}</p>`;
+    if (data.proof) html += `<p><b>所需憑證：</b>${data.proof}</p>`;
+    if (data.note) html += `<p><b>補充：</b>${data.note}</p>`;
+
+    // 部分工時規則 (對應到假別或子項目)
+    const rule = partTimeRules[subtype || type];
+    if (rule) {
+      html += `
+        <details>
+          <summary>部分工時換算說明</summary>
+          <div class="subbox">${rule}</div>
+        </details>
+      `;
+    }
+
+    resultDiv.innerHTML = html;
+    resultDiv.style.display = "block";
+  }
+</script>
 </body>
 </html>
